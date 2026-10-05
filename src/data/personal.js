@@ -1,28 +1,23 @@
 export const personalInfo = {
   name: "Elijah Ashby Dacanay",
-  primaryRole: "Full-Stack Developer",
-  secondaryRole: "IT Student / Web Developer",
-  bio: "IT student building web applications, systems, and digital experiences while continuously learning and improving.",
+  bio: "I enjoy working across every part of a product, from the interface people use to the data behind it.",
   location: "Manila, Philippines",
   email: "delijahashby@gmail.com",
   github: "https://github.com/Eliaz-commit",
-  linkedin: "http://www.linkedin.com/in/elijah-ashby-dacanay-bb1700431",
+  linkedin: "https://www.linkedin.com/in/elijah-ashby-dacanay-bb1700431",
+  // The "Download resume" button appears automatically once this file exists in public/
+  // (restart `npm run dev` after adding it).
+  resume: "/resume.pdf",
+  // To have the message form send emails directly (instead of opening the visitor's email
+  // app), create a free form at https://formspree.io and paste its endpoint here,
+  // e.g. "https://formspree.io/f/abcdwxyz".
+  contactFormEndpoint: null,
 };
 
-export const heroTechTags = [
-  "React",
-  "JavaScript",
-  "PHP",
-  "Laravel",
-  "MySQL",
-  "Tailwind CSS",
-];
-
+// Listed in the same order the sections appear on the page.
+// Contact is reached through the "Get in touch" button instead of a link.
 export const navItems = [
-  { id: "home", label: "Home" },
-  { id: "about", label: "About" },
-  { id: "skills", label: "Skills" },
   { id: "projects", label: "Projects" },
-  { id: "journey", label: "Journey" },
-  { id: "contact", label: "Contact" },
+  { id: "about", label: "About" },
+  { id: "background", label: "Background" },
 ];

@@ -1,16 +1,44 @@
-# React + Vite
+# Elijah Ashby Dacanay — Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Personal portfolio built with React and Vite, animated with GSAP and Lenis. The site uses a monochrome palette with one cobalt accent, light and dark themes, responsive layouts, and reduced-motion support.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 22.12+ (Vite 8 requirement)
+- npm
 
-## React Compiler
+## Local development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```sh
+npm install
+npm run dev
+```
 
-## Expanding the Oxlint configuration
+## Production build
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```sh
+npm run build
+npm run preview
+```
+
+## Deploy to Vercel
+
+Import this repository in Vercel. The project is configured to use Vite; the build command is `npm run build` and the output directory is `dist`. Vercel will publish the generated site after the first deployment.
+
+Link previews use `public/og-image.png`. On Vercel its full URL is filled in automatically; when deploying anywhere else, build with `SITE_URL=https://your-domain.com npm run build`.
+
+## Portfolio content
+
+- Personal details, navigation, resume, and contact form: `src/data/personal.js`
+- Project records (including the featured project's case-study notes): `src/data/projects.js`
+- Education, timeline, and certificate records: `src/data/journey.js`
+- Tech stack shown in the scrolling band: `src/data/skills.js`
+- Portrait: `public/elijah-dacanay.jpg`
+- Link-preview image: `public/og-image.png`
+
+Still to fill in:
+
+- Project links, screenshots (`image`), and the featured project's `role` and `outcome` in `src/data/projects.js`.
+- Certificate details and links in `src/data/journey.js`.
+- `public/resume.pdf`: the "Download resume" button appears once the file exists (restart `npm run dev` after adding it).
+- Optional: a form endpoint (for example from Formspree) in `contactFormEndpoint` so the message form sends directly instead of opening the visitor's email app.

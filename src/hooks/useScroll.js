@@ -1,76 +1,71 @@
 import { useEffect, useState } from "react";
 
-export function useScrollPosition() {
-  const [scrollY, setScrollY] = useState(0);
+// True while the user is scrolling down past `offset`; false as soon as they scroll up.
+// `tolerance` ignores tiny movements so the nav doesn't flicker. Only re-renders when it flips.
+export function useHideOnScroll({ offset = 120, tolerance = 6 } = {}) {
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
+    let lastY = window.scrollY;
+
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      const y = window.scrollY;
+      const delta = y - lastY;
+      if (Math.abs(delta) < tolerance) return;
+      setHidden(delta > 0 && y > offset);
+      lastY = y;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [offset, tolerance]);
 
-  return scrollY;
-}
-
-export function useIntersectionObserver(options = {}) {
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  const [element, setElement] = useState(null);
-
-  useEffect(() => {
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsIntersecting(entry.isIntersecting);
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "0px 0px -50px 0px",
-        ...options,
-      }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [element, options.threshold, options.rootMargin]);
-
-  return [setElement, isIntersecting];
+  return hidden;
 }
 
 export function useActiveSection(sectionIds, offset = 100) {
   const [activeId, setActiveId] = useState(sectionIds[0] || "");
+  const idsKey = sectionIds.join("|");
 
   useEffect(() => {
-    const handleScroll = () => {
-      const activationLine = Math.min(offset, window.innerHeight * 0.35);
-      const sections = sectionIds
-        .map((id) => ({ id, element: document.getElementById(id) }))
-        .filter(({ element }) => element)
-        .map(({ id, element }) => ({ id, top: element.getBoundingClientRect().top }));
+    const ids = idsKey.split("|");
+    let sections = [];
+    let pageHeight = 0;
 
-      const currentSection = sections
-        .filter(({ top }) => top <= activationLine)
-        .sort((a, b) => b.top - a.top)[0];
-
-      const atPageBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
-      const nextActiveId = atPageBottom
-        ? sections.sort((a, b) => b.top - a.top)[0]?.id
-        : currentSection?.id || sections.sort((a, b) => a.top - b.top)[0]?.id;
-
-      if (nextActiveId) setActiveId(nextActiveId);
+    // Section positions only change when the page's size does, so measure them then
+    // instead of on every scroll frame (reading layout while scrolling forces reflows).
+    const measure = () => {
+      sections = ids
+        .map((id) => document.getElementById(id))
+        .filter(Boolean)
+        .map((element) => ({ id: element.id, top: element.getBoundingClientRect().top + window.scrollY }))
+        .sort((a, b) => a.top - b.top);
+      pageHeight = document.documentElement.scrollHeight;
+      update();
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
-    handleScroll();
+    const update = () => {
+      if (!sections.length) return;
+      const scrollY = window.scrollY;
+      const activationLine = scrollY + Math.min(offset, window.innerHeight * 0.35);
+      const atPageBottom = window.innerHeight + scrollY >= pageHeight - 2;
+      const passed = sections.filter(({ top }) => top <= activationLine);
+      const current = atPageBottom ? sections.at(-1) : passed.at(-1) ?? sections[0];
+      setActiveId(current.id);
+    };
+
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(document.body);
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", measure);
+    measure();
+
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+      resizeObserver.disconnect();
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", measure);
     };
-  }, [sectionIds.join("|"), offset]);
+  }, [idsKey, offset]);
 
   return activeId;
 }

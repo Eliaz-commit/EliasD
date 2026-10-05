@@ -1,39 +1,32 @@
-import { useCallback, useState } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
-import Skills from "./components/Skills";
 import Projects from "./components/Projects";
-import Journey from "./components/Journey";
-import Education from "./components/Education";
-import Certificates from "./components/Certificates";
+import Background from "./components/Background";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import Marquee from "./components/Marquee";
-import WordsPreloader from "./components/WordsPreloader";
+import CursorGrid from "./components/CursorGrid";
+import CustomCursor from "./components/CustomCursor";
+import { useScrollAnimations } from "./hooks/useScrollAnimations";
 
 function App() {
-  const [introComplete, setIntroComplete] = useState(false);
-  const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
+  useScrollAnimations();
 
   return (
     <>
-      <WordsPreloader onComplete={handleIntroComplete} />
-      <div inert={!introComplete} aria-hidden={!introComplete}>
-        <Navbar />
-        <main>
-          <Hero />
-          <Marquee className="pointer-events-none" speed={40} />
-          <Projects />
-          <Skills />
-          <About />
-          <Journey />
-          <Education />
-          <Certificates />
-          <Contact />
-        </main>
-        <Footer />
-      </div>
+      <CursorGrid />
+      <Navbar />
+      <main>
+        <Hero />
+        <Marquee />
+        <Projects />
+        <About />
+        <Background />
+        <Contact />
+      </main>
+      <Footer />
+      <CustomCursor />
     </>
   );
 }

@@ -1,146 +1,160 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { TbArrowRight } from "react-icons/tb";
 import { navItems, personalInfo } from "../data/personal";
-import { useScrollPosition, useActiveSection } from "../hooks/useScroll";
+import { useActiveSection, useHideOnScroll } from "../hooks/useScroll";
 import { useTheme } from "../context/ThemeContext";
+import { getLenis } from "../lib/smoothScroll";
+
+// Which link each section highlights. "home" and "contact" highlight none.
+const linkForSection = Object.fromEntries(
+  navItems.flatMap((item) => (item.sections ?? [item.id]).map((section) => [section, item.id]))
+);
+const trackedSections = ["home", ...Object.keys(linkForSection), "contact"];
 
 export default function Navbar() {
-  const scrollY = useScrollPosition();
-  const activeId = useActiveSection(navItems.map((item) => item.id));
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [pendingActiveId, setPendingActiveId] = useState(null);
+  const hidden = useHideOnScroll();
+  const activeLink = linkForSection[useActiveSection(trackedSections)] ?? null;
+  const [menuOpen, setMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const linksRef = useRef(null);
+  const indicatorRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuButtonRef = useRef(null);
 
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      if (pendingActiveId || activeId !== id) setPendingActiveId(id);
-      element.scrollIntoView({ behavior: "smooth" });
-      setMobileOpen(false);
-    }
-  };
+  const closeMenu = () => setMenuOpen(false);
 
+  // Slide the highlight pill under the active link.
+  useLayoutEffect(() => {
+    const indicator = indicatorRef.current;
+
+    const place = () => {
+      const link = linksRef.current?.querySelector(`[data-nav-id="${activeLink}"]`);
+      const wasVisible = indicator.classList.contains("is-visible");
+      indicator.classList.toggle("is-visible", Boolean(link));
+      if (!link) return;
+
+      // When it was hidden, appear under the link instead of sliding in from the last spot.
+      indicator.classList.toggle("is-instant", !wasVisible);
+      indicator.style.setProperty("--x", `${link.offsetLeft}px`);
+      indicator.style.setProperty("--w", `${link.offsetWidth}px`);
+      if (!wasVisible) {
+        void indicator.offsetWidth;
+        indicator.classList.remove("is-instant");
+      }
+    };
+
+    place();
+    document.fonts?.ready.then(place);
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [activeLink]);
+
+  // While the full-screen menu is open: freeze the page behind it and keep focus inside.
   useEffect(() => {
-    if (!pendingActiveId) return undefined;
+    if (!menuOpen) return undefined;
 
-    let settleTimer;
-    const settle = () => {
-      clearTimeout(settleTimer);
-      setPendingActiveId(null);
-    };
-    const handleScroll = () => {
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(settle, 250);
-    };
+    const root = document.documentElement;
+    const page = [document.querySelector("main"), document.querySelector("footer")];
+    const desktop = window.matchMedia("(min-width: 768px)");
 
-    document.addEventListener("scrollend", settle);
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    getLenis()?.stop();
+    root.classList.add("menu-open");
+    page.forEach((element) => { if (element) element.inert = true; });
+    const frame = requestAnimationFrame(() => menuRef.current?.querySelector("a")?.focus({ preventScroll: true }));
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    const handleDesktop = (event) => { if (event.matches) setMenuOpen(false); };
+
+    window.addEventListener("keydown", handleKeyDown);
+    desktop.addEventListener("change", handleDesktop);
+
     return () => {
-      clearTimeout(settleTimer);
-      document.removeEventListener("scrollend", settle);
-      window.removeEventListener("scroll", handleScroll);
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", handleKeyDown);
+      desktop.removeEventListener("change", handleDesktop);
+      page.forEach((element) => { if (element) element.inert = false; });
+      root.classList.remove("menu-open");
+      getLenis()?.start();
     };
-  }, [pendingActiveId]);
+  }, [menuOpen]);
 
   return (
-    <nav
-      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl transition-all duration-300 ${
-        scrollY > 20 || mobileOpen
-          ? "bg-[var(--color-bg-elevated)]/95 backdrop-blur-xl border border-[var(--color-border)] shadow-[var(--shadow-glass)]"
-          : "bg-[var(--color-bg)]/75 backdrop-blur-xl border border-white/10"
-      } rounded-2xl px-3 sm:px-5 py-2.5`}
-      role="navigation"
-      aria-label="Main navigation"
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="font-semibold text-xs tracking-[0.22em] text-[var(--color-text)]" aria-label={`${personalInfo.name} portfolio`}>
-          ED<span className="text-[var(--color-accent)]">.</span>
-        </div>
+    <header className="site-header">
+      <nav className={`site-nav${hidden && !menuOpen ? " is-hidden" : ""}`} aria-label="Main navigation">
+        <div className="site-nav-pill">
+          <a className="site-brand" href="#home" aria-label={`${personalInfo.name}, back to top`} onClick={closeMenu}>ED</a>
 
-        <div
-          id="mobile-menu"
-          className={`flex items-center gap-1 transition-all duration-300 ${
-            mobileOpen ? "absolute inset-x-2 top-[calc(100%+0.5rem)] flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/98 p-3 shadow-[var(--shadow-glass)] md:static md:flex-row md:border-0 md:bg-transparent md:p-0 md:shadow-none" : "hidden md:flex"
-          }`}
-          role="menubar"
-        >
-          {navItems.map((item) => (
-            // Keep the clicked destination highlighted while smooth scrolling passes
-            // through other sections; resume scroll-based tracking when it settles.
-            <button
-              key={item.id}
-              onClick={() => scrollToSection(item.id)}
-              className={`relative min-h-11 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                (pendingActiveId || activeId) === item.id
-                  ? "text-[var(--color-accent)] bg-[var(--color-accent-glow)]"
-                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-card)]"
-              }`}
-              role="menuitem"
-              aria-current={(pendingActiveId || activeId) === item.id ? "page" : undefined}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+          <div className="nav-links" ref={linksRef}>
+            <span className="nav-indicator" ref={indicatorRef} aria-hidden="true" />
+            {navItems.map((item) => (
+              <a
+                key={item.id}
+                data-nav-id={item.id}
+                href={`#${item.id}`}
+                className={`nav-link${activeLink === item.id ? " is-active" : ""}`}
+                aria-current={activeLink === item.id ? "location" : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
 
-        <div className="flex items-center gap-3">
           <button
+            className="icon-button nav-theme"
+            type="button"
             onClick={toggleTheme}
-            className="min-h-11 min-w-11 p-2 rounded-xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-card)] transition-all duration-300"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            aria-pressed={theme === "light"}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-              </svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" /></svg>
             ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15.1Z" /></svg>
             )}
           </button>
 
+          <a href="#contact" className="btn btn-primary nav-cta">Get in touch</a>
+
           <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden min-h-11 min-w-11 p-2 rounded-xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-card)] transition-colors"
-            aria-expanded={mobileOpen}
+            ref={menuButtonRef}
+            className="icon-button menu-toggle"
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
             aria-controls="mobile-menu"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {mobileOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </>
-              )}
-            </svg>
+            <span className="menu-toggle-lines" aria-hidden="true"><span /><span /></span>
           </button>
         </div>
+      </nav>
+
+      <div id="mobile-menu" ref={menuRef} className={`mobile-menu${menuOpen ? " is-open" : ""}`} inert={!menuOpen}>
+        <nav className="mobile-menu-links" aria-label="Menu">
+          {navItems.map((item, index) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className={`mobile-menu-link${activeLink === item.id ? " is-active" : ""}`}
+              style={{ "--i": index }}
+              aria-current={activeLink === item.id ? "location" : undefined}
+              onClick={closeMenu}
+            >
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </nav>
+        <div className="mobile-menu-footer" style={{ "--i": navItems.length }}>
+          <a href="#contact" className="btn btn-primary btn-large" onClick={closeMenu}>
+            Get in touch <TbArrowRight aria-hidden="true" />
+          </a>
+          <a className="text-link" href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }

@@ -1,23 +1,20 @@
 export const journeyItems = [
   {
     year: "2026",
-    title: "IT Student",
+    title: "Full-stack focus",
     description: "Building web applications, networking projects, and academic systems. Currently focused on full-stack development with React, Laravel, and modern web technologies.",
-    type: "education",
     current: true,
   },
   {
     year: "2025",
     title: "Web Development",
     description: "Started developing more projects and improving programming skills. Built first full-stack applications and learned modern frameworks.",
-    type: "learning",
     current: false,
   },
   {
-    year: "2024",
+    year: "2023",
     title: "Programming Foundations",
-    description: "Learned core programming concepts, data structures, and algorithms. Started building small projects and contributing to open source.",
-    type: "learning",
+    description: "Started learning programming fundamentals and building small projects.",
     current: false,
   },
 ];
