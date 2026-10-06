@@ -97,16 +97,36 @@ function animateLayout() {
     gsap.fromTo(row, { x: from }, { x: to, ease: "none", scrollTrigger: across(".tech-marquee") });
   });
 
-  // Timeline: the line fills as you read down and each dot lights up as you reach it.
-  // This one follows the scroll both ways on purpose; it shows where you are.
-  gsap.utils.toArray(".timeline-progress").forEach((line) => {
-    gsap.fromTo(line, { scaleY: 0 }, {
-      scaleY: 1, ease: "none",
-      scrollTrigger: { trigger: line.parentElement, start: "top 65%", end: "bottom 65%", scrub: true },
+  // Timeline: the line fills as you read down and each dot lights up as the line reaches it.
+  // The line runs from the first dot to the last, and the dots are lit from the line's own
+  // position, so they stay in step. It follows the scroll both ways on purpose; it shows where you are.
+  gsap.utils.toArray(".timeline-wrap").forEach((wrap) => {
+    const line = wrap.querySelector(".timeline-progress");
+    const items = gsap.utils.toArray(".timeline-item", wrap);
+    const dotY = parseFloat(getComputedStyle(wrap).getPropertyValue("--dot-y"));
+    let dots = []; // each dot's centre, measured from the top of the timeline
+    let length = 0;
+
+    const measure = () => {
+      const top = wrap.getBoundingClientRect().top;
+      dots = items.map((item) => item.querySelector(".timeline-body").getBoundingClientRect().top - top + dotY);
+      length = dots[dots.length - 1] - dots[0];
+      line.style.height = `${length}px`;
+    };
+
+    const update = () => {
+      // How far down the timeline the reading line (65% down the screen) has reached.
+      const reach = window.innerHeight * 0.65 - wrap.getBoundingClientRect().top;
+      const filled = gsap.utils.clamp(0, length, reach - dots[0]);
+      line.style.transform = `scaleY(${length ? filled / length : 0})`;
+      items.forEach((item, i) => item.classList.toggle("is-passed", reach >= dots[i]));
+    };
+
+    ScrollTrigger.create({
+      trigger: wrap, start: "top bottom", end: "bottom top",
+      onUpdate: update,
+      onRefresh: () => { measure(); update(); },
     });
-  });
-  gsap.utils.toArray(".timeline-item").forEach((item) => {
-    ScrollTrigger.create({ trigger: item, start: "top 65%", toggleClass: { targets: item, className: "is-passed" } });
   });
 
   // Containers whose children enter one after another.
