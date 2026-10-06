@@ -11,9 +11,6 @@ const cardProjects = [...featuredProjects, ...otherProjects];
 const listedNames = new Set(cardProjects.map((project) => project.name));
 const extraProjects = projectArchive.filter((project) => !listedNames.has(project.name));
 
-// Short monogram for cards without a screenshot, e.g. "Academic Management System" -> "AM".
-const initials = (name) => name.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
-
 function ProjectRow({ name, description, technologies, year, url, extra = false }) {
   return (
     <li className={`project-row${extra ? " is-extra" : ""}`}>
@@ -36,7 +33,7 @@ function ProjectImage({ project }) {
   if (project.image) return <img src={project.image} alt="" loading="lazy" />;
   return (
     <span className="project-card-placeholder" aria-hidden="true">
-      <span className="project-card-monogram">{initials(project.name)}</span>
+      <span className="project-card-monogram">{project.monogram}</span>
     </span>
   );
 }
@@ -49,7 +46,7 @@ function ProjectCard({ project, onOpen }) {
         <ProjectImage project={project} />
       </div>
       <div className="project-card-body">
-        <p className="meta">{project.year} / {project.category.split(" / ")[0]}</p>
+        <p className="meta">{project.year} / {project.primaryCategory}</p>
         <h3>{project.name}</h3>
         <p className="project-card-text">{project.description}</p>
         <button type="button" className="btn project-card-btn" onClick={() => onOpen(project)}>
@@ -75,7 +72,7 @@ function ProjectDetails({ project, onClose }) {
         <h3>{project.name}</h3>
         <p className="project-dialog-text">{project.longDescription || project.description}</p>
 
-        {project.features?.length > 0 && (
+        {project.features.length > 0 && (
           <div>
             <h4 className="minor-heading">What it does</h4>
             <ul className="plain-list">
@@ -84,10 +81,11 @@ function ProjectDetails({ project, onClose }) {
           </div>
         )}
 
-        {(project.role || project.outcome) && (
+        {project.caseNotes.length > 0 && (
           <dl className="case-notes">
-            {project.role && <div><dt className="minor-heading">My role</dt><dd>{project.role}</dd></div>}
-            {project.outcome && <div><dt className="minor-heading">Outcome</dt><dd>{project.outcome}</dd></div>}
+            {project.caseNotes.map(({ label, text }) => (
+              <div key={label}><dt className="minor-heading">{label}</dt><dd>{text}</dd></div>
+            ))}
           </dl>
         )}
 
@@ -95,14 +93,14 @@ function ProjectDetails({ project, onClose }) {
           {project.technologies.map((tech) => <li key={tech} className="chip">{tech}</li>)}
         </ul>
 
-        {(isRealUrl(project.githubUrl) || isRealUrl(project.liveUrl)) && (
+        {(project.hasCode || project.hasLiveDemo) && (
           <div className="project-feature-links">
-            {isRealUrl(project.liveUrl) && (
+            {project.hasLiveDemo && (
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                 Live demo <span aria-hidden="true">↗</span>
               </a>
             )}
-            {isRealUrl(project.githubUrl) && (
+            {project.hasCode && (
               <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="btn">
                 View code <span aria-hidden="true">↗</span>
               </a>

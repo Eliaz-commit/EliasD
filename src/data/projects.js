@@ -1,5 +1,7 @@
+import { FeaturedProject, Project } from "../lib/Project";
+
 export const featuredProjects = [
-  {
+  new FeaturedProject({
     id: "aconite-restaurant",
     name: "Aconite Restaurant",
     category: "Food & Dining / Full-Stack Web App",
@@ -20,10 +22,9 @@ export const featuredProjects = [
     image: "/aconite-restaurant.png",
     githubUrl: "YOUR_GITHUB_URL",
     liveUrl: null,
-    featured: true,
     year: 2026,
-  },
-  {
+  }),
+  new FeaturedProject({
     id: "tala",
     name: "TALA",
     category: "Productivity / Full-Stack Web App",
@@ -42,13 +43,12 @@ export const featuredProjects = [
     image: "/tala.png",
     githubUrl: "YOUR_GITHUB_URL",
     liveUrl: null,
-    featured: true,
     year: 2026,
-  },
+  }),
 ];
 
 export const otherProjects = [
-  {
+  new Project({
     id: "c-link",
     name: "C-Link",
     category: "Transportation / Web System",
@@ -63,9 +63,8 @@ export const otherProjects = [
     image: null,
     githubUrl: "YOUR_GITHUB_URL",
     liveUrl: "YOUR_LIVE_URL",
-    featured: false,
     year: 2026,
-  },
+  }),
 ];
 
 export const projectArchive = [
