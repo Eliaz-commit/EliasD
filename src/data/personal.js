@@ -2,6 +2,10 @@ export const personalInfo = {
   name: "Elijah Ashby Dacanay",
   bio: "I enjoy working across every part of a product, from the interface people use to the data behind it.",
   location: "Manila, Philippines",
+  school: "National University - Manila",
+  program: "BS Information Technology",
+  // Shown as chips in the About section. Edit these to match what you actually enjoy.
+  interests: ["Full-stack web development", "Interface design", "Databases", "Networking"],
   email: "delijahashby@gmail.com",
   github: "https://github.com/Eliaz-commit",
   linkedin: "https://www.linkedin.com/in/elijah-ashby-dacanay-bb1700431",

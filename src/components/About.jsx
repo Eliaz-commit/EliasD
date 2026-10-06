@@ -1,4 +1,12 @@
 import { personalInfo } from "../data/personal";
+import { skills } from "../data/skills";
+
+const facts = [
+  { label: "Name", value: personalInfo.name },
+  { label: "Location", value: personalInfo.location },
+  { label: "Studying", value: `${personalInfo.program}, ${personalInfo.school}` },
+  { label: "Email", value: personalInfo.email },
+];
 
 export default function About() {
   return (
@@ -12,6 +20,31 @@ export default function About() {
           <p className="about-copy reveal">
             I’m studying Information Technology at National University - Manila. Most of what I’ve built so far started as school projects, like C-Link and an academic management system.
           </p>
+        </div>
+
+        <div className="about-details">
+          <div className="about-block reveal">
+            <h3 className="subsection-title">Personal information</h3>
+            <dl className="about-facts">
+              {facts.map(({ label, value }) => (
+                <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="about-block reveal">
+            <h3 className="subsection-title">Skills</h3>
+            <ul className="chip-list">
+              {skills.map(({ name }) => <li key={name} className="chip">{name}</li>)}
+            </ul>
+          </div>
+
+          <div className="about-block reveal">
+            <h3 className="subsection-title">Interests</h3>
+            <ul className="chip-list">
+              {personalInfo.interests.map((interest) => <li key={interest} className="chip">{interest}</li>)}
+            </ul>
+          </div>
         </div>
       </div>
     </section>

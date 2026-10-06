@@ -7,8 +7,8 @@ export default function Hero() {
       <div className="hero-content section-container">
         <div className="hero-intro">
           <p className="hero-eyebrow label">Open to internships</p>
-          <h1 id="hero-title">I build full-stack <span>web apps.</span></h1>
-          <p className="hero-summary">I’m {personalInfo.name}, an IT student in Manila working across React, Laravel, and MySQL.</p>
+          <h1 id="hero-title">I build web apps <span>for people.</span></h1>
+          <p className="hero-summary"><span className="hero-welcome">Welcome to my portfolio!</span> I’m {personalInfo.name}, an IT student in Manila working across React, Laravel, and MySQL.</p>
           <div className="hero-actions">
             <a href="#projects" className="btn btn-primary">View projects</a>
             <a href="#contact" className="btn">Get in touch</a>
